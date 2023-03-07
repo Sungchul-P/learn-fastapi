@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "learn-fastapi"
+version = "0.1.0"
+description = ""
+authors = ["Sungchul Park <sungchul.dev@gmail.com>"]
+readme = "README.md"
+packages = [{include = "learn_fastapi"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "^0.92.0"
+uvicorn = {extras = ["standard"], version = "^0.20.0"}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
