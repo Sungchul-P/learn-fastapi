@@ -10,6 +10,7 @@ packages = [{include = "learn_fastapi"}]
 python = "^3.9"
 fastapi = "^0.92.0"
 uvicorn = {extras = ["standard"], version = "^0.20.0"}
+sqlmodel = "^0.0.8"
 
 
 [build-system]
