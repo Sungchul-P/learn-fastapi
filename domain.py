@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlmodel import SQLModel, Field
+from sqlmodel import Field, SQLModel
 
 
 class PostBase(SQLModel):
@@ -19,9 +19,10 @@ class PostCreate(PostBase):
             "example": {
                 "title": "FastAPI Tutorial",
                 "content": "Learn how to build APIs with FastAPI and Python.",
-                "author": "Anonymous"
+                "author": "Anonymous",
             }
         }
+
     pass
 
 

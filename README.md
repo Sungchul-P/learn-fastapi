@@ -39,7 +39,7 @@ graph TB
         ENT[domain.py]
     end
     subgraph Data Access Layer
-        DB[Database]
+        DB[database.py]
     end
     MAIN --> API
     MAIN --> DB
