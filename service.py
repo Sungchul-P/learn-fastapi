@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import HTTPException, status
 from sqlmodel import Session, select
 
@@ -25,8 +27,8 @@ async def read_post(post_id: int, session: Session):
 
 
 async def update_post(post_id: int, post: PostUpdate, session: Session):
-    db_post = session.get(Post, post_id)
-    if not post:
+    db_post: Optional[Post] = session.get(Post, post_id)
+    if not db_post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="페이지를 찾을 수 없습니다")
 
     if post.author != db_post.author:

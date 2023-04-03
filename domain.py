@@ -4,6 +4,10 @@ from sqlmodel import Field, SQLModel
 
 
 class PostBase(SQLModel):
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)  # 부모 클래스의 __init_subclass__ 호출
+        cls.table = kwargs.get("table")  # 'table' 인자를 받아 클래스 속성에 저장
+
     title: str
     content: Optional[str]
     author: str = Field(index=True)
