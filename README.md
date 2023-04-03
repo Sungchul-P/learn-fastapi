@@ -11,6 +11,9 @@ FastAPI 사용법을 익히기 위한 레포지터리
 ```shell
 poetry install
 poetry shell
+
+# 코드 일관성을 위해 pre-commit 훅 스크립트 설치
+pre-commit install
 ```
 
 ## 실행 및 API 테스트
@@ -46,4 +49,22 @@ graph TB
     API --> SVC
     API --> ENT
     SVC --> ENT
+```
+
+## GitHub Flow 브랜치 전략 프로세스
+
+1. 브랜치 생성 (네이밍 컨벤션 : feature/add-logic)
+2. 코드 커밋 & 푸시
+3. PR(Pull Request) 생성 후, 테스트 및 리뷰
+4. 병합(Merge) 및 배포(Deploy)
+5. 병합 및 배포 완료 된 브랜치는 삭제 
+
+```mermaid
+graph LR
+    A[main] -- Feature --> B[feature/feature-1]
+    A -- Feature --> C[feature/feature-2]
+    B -- Pull Request --> D[test, review]
+    C -- Pull Request --> E[test, review]
+    D -- Merge --> A
+    E -- Merge --> A
 ```
