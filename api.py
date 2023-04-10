@@ -3,8 +3,15 @@ from sqlmodel import Session
 from starlette import status
 
 from database import engine
-from domain import PostCreate, PostUpdate
-from service import create_post, delete_post, read_post, read_posts, update_post
+from service import (
+    PostCreate,
+    PostUpdate,
+    create_post,
+    delete_post,
+    read_post,
+    read_posts,
+    update_post,
+)
 
 router = APIRouter()
 
@@ -21,9 +28,7 @@ async def create_post_route(post: PostCreate, session: Session = Depends(get_ses
 
 @router.get("/posts/")
 async def read_posts_route(
-    offset: int = 0,
-    limit: int = Query(default=100),
-    session: Session = Depends(get_session),
+    offset: int = 0, limit: int = Query(default=100), session: Session = Depends(get_session)
 ):
     return await read_posts(offset, limit, session)
 
@@ -34,7 +39,9 @@ async def read_post_route(post_id: int, session: Session = Depends(get_session))
 
 
 @router.put("/posts/{post_id}")
-async def update_post_route(post_id: int, post: PostUpdate, session: Session = Depends(get_session)):
+async def update_post_route(
+    post_id: int, post: PostUpdate, session: Session = Depends(get_session)
+):
     return await update_post(post_id, post, session)
 
 

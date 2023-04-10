@@ -47,7 +47,6 @@ graph TB
     MAIN --> API
     MAIN --> DB
     API --> SVC
-    API --> ENT
     SVC --> ENT
 ```
 
