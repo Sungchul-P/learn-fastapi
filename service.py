@@ -4,7 +4,7 @@ from typing import List, Optional
 from fastapi import HTTPException, status
 from sqlmodel import Field, Session, SQLModel, select
 
-from model import Post, User
+from model import Comment, Post, User
 
 
 class UserCreate(SQLModel):
@@ -49,13 +49,51 @@ class PostRead(SQLModel):
     id: int
     title: str
     content: Optional[str]
-    author_id: str = Field(index=True)  # type: ignore
+    author_id: str = Field(index=True)
 
 
 class PostUpdate(SQLModel):
     title: Optional[str]
     content: Optional[str]
-    author_id: str  # type: ignore
+    author_id: str
+
+
+class CommentCreate(SQLModel):
+    content: Optional[str]
+    author_id: str
+    post_id: int
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "content": "Learn how to build APIs with FastAPI and Python.",
+                "author_id": "user123",
+            }
+        }
+
+
+class CommentRead(SQLModel):
+    id: int
+    author_id: str
+    post_id: int
+    content: Optional[str]
+    created_at: datetime
+
+
+class CommentUpdate(SQLModel):
+    content: Optional[str]
+    author_id: str
+    post_id: int
+    password: str
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "content": "Learn how to build APIs with FastAPI and Python.",
+                "author_id": "user123",
+                "password": "Password123",
+            }
+        }
 
 
 def get_user_by_id(user_id: str, session: Session) -> Optional[User]:
@@ -70,6 +108,22 @@ async def get_posts_by_user(user_id: str, offset: int, limit: int, session: Sess
     query = select(Post).where(Post.author_id == user_id).offset(offset).limit(limit)
     posts = session.exec(query).all()
     return posts
+
+
+async def get_comments_by_user(
+    user_id: str, offset: int, limit: int, session: Session
+) -> List[Comment]:
+    query = select(Comment).where(Comment.author_id == user_id).offset(offset).limit(limit)
+    comment = session.exec(query).all()
+    return comment
+
+
+async def get_comments_by_post(
+    post_id: int, offset: int, limit: int, session: Session
+) -> List[Comment]:
+    query = select(Comment).where(Comment.post_id == post_id).offset(offset).limit(limit)
+    comment = session.exec(query).all()
+    return comment
 
 
 async def create_user(user: UserCreate, session: Session):
@@ -97,6 +151,10 @@ async def read_user(user_id: str, session: Session):
 
 async def read_user_posts(user_id: str, offset: int, limit: int, session: Session):
     return await get_posts_by_user(user_id, offset, limit, session)
+
+
+async def read_user_comments(user_id: str, offset: int, limit: int, session: Session):
+    return await get_comments_by_user(user_id, offset, limit, session)
 
 
 async def update_user(user_id: str, user: UserUpdate, session: Session):
@@ -179,5 +237,45 @@ async def delete_post(post_id: int, author_id: str, session: Session):
     if post.author_id != author_id:  # type: ignore
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="게시글 작성자만 수정할 수 있습니다")
     session.delete(post)
+    session.commit()
+    return {"ok": True}
+
+
+async def create_comment(comment: CommentCreate, session: Session):
+    db_comment = Comment.from_orm(comment)
+    session.add(db_comment)
+    session.commit()
+    session.refresh(db_comment)
+    return db_comment
+
+
+async def read_post_comments(post_id: int, offset: int, limit: int, session: Session):
+    return await get_comments_by_post(post_id, offset, limit, session)
+
+
+async def update_comment(comment_id: int, comment: CommentUpdate, session: Session):
+    db_comment: Optional[Comment] = session.get(Comment, comment_id)
+    if not db_comment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="댓글을 찾을 수 없습니다")
+
+    if comment.password != db_comment.user.password:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="비밀번호가 틀렸습니다")
+    comment_data = comment.dict(exclude_unset=True)
+    for key, value in comment_data.items():
+        setattr(db_comment, key, value)
+    session.add(db_comment)
+    session.commit()
+    session.refresh(db_comment)
+    return db_comment
+
+
+async def delete_comment(comment_id: int, author_id: str, session: Session):
+    comment: Optional[Comment] = session.get(Comment, comment_id)
+    if not comment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="댓글을 찾을 수 없습니다")
+
+    if comment.author_id != author_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="댓글 작성자만 삭제할 수 있습니다")
+    session.delete(comment)
     session.commit()
     return {"ok": True}

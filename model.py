@@ -29,16 +29,16 @@ class Post(SQLModel, table=True):  # type: ignore
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str
     content: Optional[str]
-    author_id: Optional[str] = Field(foreign_key="user.id")
+    author_id: str = Field(foreign_key="user.id")
     user: Optional[User] = Relationship(back_populates="posts")
-    comments: List["Comment"] = Relationship(back_populates="posts")
+    comments: List["Comment"] = Relationship(back_populates="post")
 
 
 class Comment(SQLModel, table=True):  # type: ignore
     id: Optional[int] = Field(default=None, primary_key=True)
-    author_id: Optional[str] = Field(foreign_key="user.id")
-    user: Optional[User] = Relationship(back_populates="comments")
-    post_id: Optional[int] = Field(foreign_key="post.id")
-    post: Optional[Post] = Relationship(back_populates="comments")
+    author_id: str = Field(foreign_key="user.id")
+    user: User = Relationship(back_populates="comments")
+    post_id: int = Field(foreign_key="post.id")
+    post: Post = Relationship(back_populates="comments")
     content: Optional[str]
     created_at: datetime = Field(default=datetime.utcnow())
