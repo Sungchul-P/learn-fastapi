@@ -9,6 +9,7 @@ from sqlmodel import Field, Relationship, SQLModel
 class User(SQLModel, table=True):  # type: ignore
     id: str = Field(primary_key=True)
     posts: List["Post"] = Relationship(back_populates="user")
+    comments: List["Comment"] = Relationship(back_populates="user")
     password: str = Field()
     nickname: Optional[str] = Field(max_length=20, index=True)
     created_at: datetime = Field(default=datetime.utcnow())
@@ -30,3 +31,14 @@ class Post(SQLModel, table=True):  # type: ignore
     content: Optional[str]
     author_id: Optional[str] = Field(foreign_key="user.id")
     user: Optional[User] = Relationship(back_populates="posts")
+    comments: List["Comment"] = Relationship(back_populates="posts")
+
+
+class Comment(SQLModel, table=True):  # type: ignore
+    id: Optional[int] = Field(default=None, primary_key=True)
+    author_id: Optional[str] = Field(foreign_key="user.id")
+    user: Optional[User] = Relationship(back_populates="comments")
+    post_id: Optional[int] = Field(foreign_key="post.id")
+    post: Optional[Post] = Relationship(back_populates="comments")
+    content: Optional[str]
+    created_at: datetime = Field(default=datetime.utcnow())

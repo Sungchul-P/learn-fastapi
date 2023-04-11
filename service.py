@@ -4,7 +4,7 @@ from typing import List, Optional
 from fastapi import HTTPException, status
 from sqlmodel import Field, Session, SQLModel, select
 
-from domain import Post, User
+from model import Post, User
 
 
 class UserCreate(SQLModel):
@@ -63,7 +63,7 @@ def get_user_by_id(user_id: str, session: Session) -> Optional[User]:
 
 
 def raise_user_not_found() -> None:
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="페이지를 찾을 수 없습니다")
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="사용자를 찾을 수 없습니다")
 
 
 async def get_posts_by_user(user_id: str, offset: int, limit: int, session: Session) -> List[Post]:
@@ -86,6 +86,13 @@ async def create_user(user: UserCreate, session: Session):
 async def read_users(offset: int, limit: int, session: Session):
     users = session.exec(select(User).offset(offset).limit(limit)).all()
     return users
+
+
+async def read_user(user_id: str, session: Session):
+    user = get_user_by_id(user_id, session)
+    if not user:
+        raise_user_not_found()
+    return user
 
 
 async def read_user_posts(user_id: str, offset: int, limit: int, session: Session):

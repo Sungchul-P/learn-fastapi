@@ -39,7 +39,7 @@ graph TB
         SVC[service.py]
     end
     subgraph Domain Layer
-        ENT[domain.py]
+        ENT[model.py]
     end
     subgraph Data Access Layer
         DB[database.py]
@@ -81,8 +81,6 @@ erDiagram
     
     USER {
         string id PK "작성자 아이디"
-        int post_id FK "게시글 아이디"
-        int comment_id FK "댓글 아이디"
         string password 
         string nickname
         datetime created_at "생성 날짜"

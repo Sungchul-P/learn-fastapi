@@ -10,6 +10,7 @@ from service import (
     PostRead,
     PostUpdate,
     UserCreate,
+    UserRead,
     UserUpdate,
     create_post,
     create_user,
@@ -17,6 +18,7 @@ from service import (
     delete_user,
     read_post,
     read_posts,
+    read_user,
     read_user_posts,
     read_users,
     update_post,
@@ -43,7 +45,12 @@ async def read_users_route(
     return await read_users(offset, limit, session)
 
 
-@router.get("/users/posts", response_model=List[PostRead])
+@router.get("/users/{user_id}", response_model=UserRead)
+async def read_user_route(user_id: str, session: Session = Depends(get_session)):
+    return await read_user(user_id, session)
+
+
+@router.get("/users/{user_id}/posts", response_model=List[PostRead])
 async def read_user_posts_route(
     user_id: str,
     page: int = 0,
