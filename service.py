@@ -61,7 +61,6 @@ class PostUpdate(SQLModel):
 class CommentCreate(SQLModel):
     content: Optional[str]
     author_id: str
-    post_id: int
 
     class Config:
         schema_extra = {
@@ -83,7 +82,6 @@ class CommentRead(SQLModel):
 class CommentUpdate(SQLModel):
     content: Optional[str]
     author_id: str
-    post_id: int
     password: str
 
     class Config:
@@ -241,8 +239,9 @@ async def delete_post(post_id: int, author_id: str, session: Session):
     return {"ok": True}
 
 
-async def create_comment(comment: CommentCreate, session: Session):
-    db_comment = Comment.from_orm(comment)
+async def create_comment(post_id: int, comment: CommentCreate, session: Session):
+    db_comment = Comment(post_id=post_id, **comment.dict())
+    db_comment.post_id = post_id
     session.add(db_comment)
     session.commit()
     session.refresh(db_comment)
@@ -253,14 +252,18 @@ async def read_post_comments(post_id: int, offset: int, limit: int, session: Ses
     return await get_comments_by_post(post_id, offset, limit, session)
 
 
-async def update_comment(comment_id: int, comment: CommentUpdate, session: Session):
+async def update_comment(post_id: int, comment_id: int, comment: CommentUpdate, session: Session):
     db_comment: Optional[Comment] = session.get(Comment, comment_id)
     if not db_comment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="댓글을 찾을 수 없습니다")
 
-    if comment.password != db_comment.user.password:
+    if post_id != db_comment.post_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="게시글 정보가 잘못됐습니다")
+    elif comment.author_id != db_comment.author_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="댓글 작성자만 수정할 수 있습니다")
+    elif comment.password != db_comment.user.password:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="비밀번호가 틀렸습니다")
-    comment_data = comment.dict(exclude_unset=True)
+    comment_data = comment.dict(exclude_unset=True, exclude={"password"})
     for key, value in comment_data.items():
         setattr(db_comment, key, value)
     session.add(db_comment)

@@ -125,8 +125,7 @@ async def delete_post_route(post_id: int, author: str, session: Session = Depend
 async def create_comment_route(
     post_id: int, comment: CommentCreate, session: Session = Depends(get_session)
 ):
-    comment.post_id = post_id
-    return await create_comment(comment, session)
+    return await create_comment(post_id, comment, session)
 
 
 @router.get("/posts/{post_id}/comments/", response_model=List[CommentRead])
@@ -144,8 +143,7 @@ async def read_post_comments_route(
 async def update_comment_route(
     post_id: int, comment_id: int, comment: CommentUpdate, session: Session = Depends(get_session)
 ):
-    comment.post_id = post_id
-    return await update_comment(comment_id, comment, session)
+    return await update_comment(post_id, comment_id, comment, session)
 
 
 @router.delete("/posts/{post_id}/comments/{comment_id}")
