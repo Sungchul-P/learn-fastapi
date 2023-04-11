@@ -39,7 +39,7 @@ graph TB
         SVC[service.py]
     end
     subgraph Domain Layer
-        ENT[domain.py]
+        ENT[model.py]
     end
     subgraph Data Access Layer
         DB[database.py]
@@ -47,7 +47,6 @@ graph TB
     MAIN --> API
     MAIN --> DB
     API --> SVC
-    API --> ENT
     SVC --> ENT
 ```
 
@@ -67,4 +66,35 @@ graph LR
     C -- Pull Request --> E[test, review]
     D -- Merge --> A
     E -- Merge --> A
+```
+
+## Entity Relationship Diagrams
+
+```mermaid
+erDiagram
+    POST {
+        int id PK "게시글 아이디"
+        string title 
+        string content
+        string author_id FK "작성자 아이디"
+    }
+    
+    USER {
+        string id PK "작성자 아이디"
+        string password 
+        string nickname
+        datetime created_at "생성 날짜"
+    }
+    
+    COMMENT {
+        int id PK "댓글 아이디"
+        string author_id FK "작성자 아이디"
+        int post_id FK "게시글 아이디"
+        string content
+        datetime created_at "생성 날짜"
+    }
+    
+    POST ||--o{ COMMENT : contains
+    USER ||--o{ POST : create
+    USER ||--o{ COMMENT : create
 ```
