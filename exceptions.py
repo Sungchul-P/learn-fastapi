@@ -64,7 +64,7 @@ class CommentAuthorizationFailedException(HTTPException):
             detail=f"{author_id}은(는) 해당 댓글에 대한 권한이 부족하거나 비밀번호가 틀렸습니다.",
         )
 
-
+        
 class NotAuthenticated(HTTPException):
     def __init__(self):
         super().__init__(
