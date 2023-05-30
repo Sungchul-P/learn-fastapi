@@ -1,7 +1,8 @@
-from datetime import datetime
-from typing import List, Optional
+import secrets
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
-from fastapi import HTTPException, status
+from fastapi.security import HTTPBasicCredentials
 from sqlmodel import Field, Session, SQLModel, select
 
 from exceptions import (
@@ -15,17 +16,23 @@ from exceptions import (
     UserCreationFailedException,
     UserNotFoundException,
 )
-from model import Comment, Post, User
+from model import Comment, Post, Role, User
 
 
 class UserCreate(SQLModel):
     id: str
     password: str
     nickname: Optional[str]
+    role: Optional[Role]
 
     class Config:
         schema_extra = {
-            "example": {"id": "user123", "password": "Password123", "nickname": "Anonymous"}
+            "example": {
+                "id": "user123",
+                "password": "Password123",
+                "nickname": "Anonymous",
+                "role": Role.MEMBER,
+            }
         }
 
 
@@ -292,3 +299,44 @@ async def delete_comment(comment_id: int, author_id: str, session: Session):
     session.delete(comment)
     session.commit()
     return {"ok": True}
+
+
+user_sessions: Dict[str, Any] = {}
+
+
+def get_current_user_svc(username: str, session: Session):
+    user_session = user_sessions.get(username)
+    if user_session and user_session["expire_date"] > datetime.now():
+        user: Optional[User] = get_user_by_id(username, session)
+        if user:
+            return user
+
+    return None
+
+
+async def login(credentials: HTTPBasicCredentials, session: Session):
+    user: Optional[User] = await read_user(credentials.username, session)
+
+    if not user or user.password != credentials.password:
+        raise UserAuthorizationFailedException
+
+    user_session = user_sessions.get(credentials.username)
+    if not user_session:
+        user_session = {
+            "session_id": secrets.token_hex(16),
+            "expire_date": datetime.now() + timedelta(days=1),
+        }
+        user_sessions[credentials.username] = user_session
+    else:
+        user_session["expire_date"] = datetime.now() + timedelta(days=1)
+
+    print(user_sessions)
+    return {"message": f"{user.id} 로그인 성공!"}
+
+
+async def logout(user_id: str):
+    user_session = user_sessions.get(user_id)
+    if user_session:
+        del user_sessions[user_id]
+
+    return {"message": f"{user_id} 로그아웃."}

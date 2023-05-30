@@ -1,9 +1,15 @@
 import re
 from datetime import datetime
+from enum import Enum
 from typing import List, Optional
 
 from pydantic import validator
 from sqlmodel import Field, Relationship, SQLModel
+
+
+class Role(str, Enum):
+    MEMBER = "member"
+    ADMIN = "admin"
 
 
 class User(SQLModel, table=True):  # type: ignore
@@ -12,6 +18,7 @@ class User(SQLModel, table=True):  # type: ignore
     comments: List["Comment"] = Relationship(back_populates="user")
     password: str = Field()
     nickname: Optional[str] = Field(max_length=20, index=True)
+    role: Role = Field(default=Role.MEMBER, max_length=20)
     created_at: datetime = Field(default=datetime.utcnow())
 
     @validator("password")

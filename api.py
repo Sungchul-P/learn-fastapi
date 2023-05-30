@@ -1,10 +1,13 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlmodel import Session
 from starlette import status
 
 from database import engine
+from exceptions import NotAuthenticated, UserAuthorizationFailedException
+from model import User
 from service import (
     CommentCreate,
     CommentRead,
@@ -21,6 +24,9 @@ from service import (
     delete_comment,
     delete_post,
     delete_user,
+    get_current_user_svc,
+    login,
+    logout,
     read_post,
     read_post_comments,
     read_posts,
@@ -34,11 +40,34 @@ from service import (
 )
 
 router = APIRouter()
+security = HTTPBasic()
 
 
 def get_session():
     with Session(engine) as session:
         yield session
+
+
+def get_current_user(
+    credentials: HTTPBasicCredentials = Depends(security), session: Session = Depends(get_session)
+):
+    username = credentials.username
+    user = get_current_user_svc(username, session)
+    if not user:
+        raise NotAuthenticated
+    return user
+
+
+@router.post("/users/login")
+async def login_route(
+    credentials: HTTPBasicCredentials = Depends(security), session: Session = Depends(get_session)
+):
+    return await login(credentials, session)
+
+
+@router.post("/users/logout")
+async def logout_route(current_user: User = Depends(get_current_user)):
+    return await logout(current_user.id)
 
 
 @router.post("/users/", status_code=status.HTTP_201_CREATED)

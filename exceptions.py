@@ -63,3 +63,12 @@ class CommentAuthorizationFailedException(HTTPException):
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"{author_id}은(는) 해당 댓글에 대한 권한이 부족하거나 비밀번호가 틀렸습니다.",
         )
+
+        
+class NotAuthenticated(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="인증 실패",
+            headers={"WWW-Authenticate": "Basic"},
+        )
