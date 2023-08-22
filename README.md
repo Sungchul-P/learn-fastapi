@@ -19,6 +19,7 @@ pre-commit install
 ## 실행 및 API 테스트
 
 ```shell
+pytest --cov --cov-report=term --cov-report=html .
 uvicorn main:app --reload
 
 # Swagger UI
