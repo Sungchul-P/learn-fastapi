@@ -6,7 +6,7 @@ from sqlmodel import Session
 from starlette import status
 
 from database import engine
-from exceptions import NotAuthenticated, UserAuthorizationFailedException
+from exceptions import NotAuthenticated
 from model import User
 from service import (
     CommentCreate,
