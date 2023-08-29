@@ -35,3 +35,6 @@ skip-magic-trailing-comma = true
 line_length = 99
 profile = "black"
 skip_gitignore = true
+
+[tool.pycln]
+all = true
