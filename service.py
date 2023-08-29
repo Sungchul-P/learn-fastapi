@@ -9,12 +9,14 @@ from exceptions import (
     CommentAuthorizationFailedException,
     CommentCreationFailedException,
     CommentNotFoundException,
+    NotAuthenticated,
     PostAuthorizationFailedException,
     PostCreationFailedException,
     PostNotFoundException,
     UserAuthorizationFailedException,
     UserCreationFailedException,
     UserNotFoundException,
+    UserSessionNotFoundException,
 )
 from model import Comment, Post, Role, User
 
@@ -304,14 +306,14 @@ async def delete_comment(comment_id: int, author_id: str, session: Session):
 user_sessions: Dict[str, Any] = {}
 
 
-def get_current_user_svc(username: str, session: Session):
+def get_current_user(username: str, session: Session):
     user_session = user_sessions.get(username)
     if user_session and user_session["expire_date"] > datetime.now():
         user: Optional[User] = get_user_by_id(username, session)
         if user:
-            return user
+            return user, user_session
 
-    return None
+    raise NotAuthenticated
 
 
 async def login(credentials: HTTPBasicCredentials, session: Session):
@@ -330,7 +332,6 @@ async def login(credentials: HTTPBasicCredentials, session: Session):
     else:
         user_session["expire_date"] = datetime.now() + timedelta(days=1)
 
-    print(user_sessions)
     return {"message": f"{user.id} 로그인 성공!"}
 
 
@@ -338,5 +339,6 @@ async def logout(user_id: str):
     user_session = user_sessions.get(user_id)
     if user_session:
         del user_sessions[user_id]
-
-    return {"message": f"{user_id} 로그아웃."}
+        return {"message": f"{user_id} 로그아웃 성공."}
+    else:
+        raise UserSessionNotFoundException
