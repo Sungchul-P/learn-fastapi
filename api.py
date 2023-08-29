@@ -7,7 +7,6 @@ from starlette import status
 
 from database import engine
 from exceptions import NotAuthenticated
-from model import User
 from service import (
     CommentCreate,
     CommentRead,
@@ -24,7 +23,7 @@ from service import (
     delete_comment,
     delete_post,
     delete_user,
-    get_current_user_svc,
+    get_current_user,
     login,
     logout,
     read_post,
@@ -48,14 +47,15 @@ def get_session():
         yield session
 
 
-def get_current_user(
+def get_current_session(
     credentials: HTTPBasicCredentials = Depends(security), session: Session = Depends(get_session)
 ):
     username = credentials.username
-    user = get_current_user_svc(username, session)
-    if not user:
+    user, user_session = get_current_user(username, session)
+    if not user or not user_session:
         raise NotAuthenticated
-    return user
+    user_session["user_id"] = user.id
+    return user_session
 
 
 @router.post("/users/login")
@@ -66,8 +66,10 @@ async def login_route(
 
 
 @router.post("/users/logout")
-async def logout_route(current_user: User = Depends(get_current_user)):
-    return await logout(current_user.id)
+async def logout_route(current_session=Depends(get_current_session)):
+    current_user_id = current_session["user_id"]
+
+    return await logout(current_user_id)
 
 
 @router.post("/users/", status_code=status.HTTP_201_CREATED)

@@ -1,7 +1,11 @@
+import secrets
 import uuid
+from datetime import datetime, timedelta
 from typing import Optional
+from unittest.mock import patch
 
 import pytest
+from fastapi.security import HTTPBasicCredentials
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 from sqlmodel import Field, Session, select
@@ -651,3 +655,92 @@ def test_delete_comment(
 
     # Then
     assert response.status_code == 200
+
+
+mock_user_sessions = {
+    "test_user": {
+        "session_id": secrets.token_hex(16),
+        "expire_date": datetime.now() + timedelta(days=1),
+    }
+}
+
+
+@pytest.fixture
+def mock_global_user_sessions():
+    with patch("service.user_sessions", mock_user_sessions):
+        yield
+
+
+def test_login(user_payload: UserPayload):
+    # Given
+    user_payload.id = "test_user"
+    user = user_payload.dict()
+    with Session(engine) as session:
+        db_user = User.from_orm(user_payload)
+        session.add(db_user)
+        session.commit()
+        session.refresh(db_user)
+
+    credentials = HTTPBasicCredentials(username=user["id"], password=user["password"])
+
+    # When
+    response = client.post("/users/login", auth=(credentials.username, credentials.password))
+
+    # Then
+    assert response.status_code == 200
+
+
+def test_login_invalid_password(user_payload: UserPayload):
+    # Given
+    user_payload.id = "test_user"
+    user = user_payload.dict()
+    with Session(engine) as session:
+        db_user = User.from_orm(user_payload)
+        session.add(db_user)
+        session.commit()
+        session.refresh(db_user)
+
+    credentials = HTTPBasicCredentials(username=user["id"], password="InvalidPassword")
+
+    # When
+    response = client.post("/users/login", auth=(credentials.username, credentials.password))
+
+    # Then
+    assert response.status_code == 403
+
+
+def test_logout(user_payload: UserPayload):
+    # Given
+    user_payload.id = "test_user"
+    user = user_payload.dict()
+    with Session(engine) as session:
+        db_user = User.from_orm(user_payload)
+        session.add(db_user)
+        session.commit()
+        session.refresh(db_user)
+
+    credentials = HTTPBasicCredentials(username=user["id"], password=user["password"])
+
+    # When
+    response = client.post("/users/logout", auth=(credentials.username, credentials.password))
+    #
+
+    # Then
+    assert response.status_code == 200
+
+
+def test_logout_not_authenticate(user_payload: UserPayload):
+    # Given
+    user_payload.id = "test_user"
+    user = user_payload.dict()
+    with Session(engine) as session:
+        db_user = User.from_orm(user_payload)
+        session.add(db_user)
+        session.commit()
+        session.refresh(db_user)
+
+    # When
+    response = client.post("/users/logout", auth=("test_user2", user["password"]))
+
+    # Then
+    assert response.status_code == 401
